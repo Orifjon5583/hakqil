@@ -32,12 +32,18 @@ export function Settings() {
   async function save(event: FormEvent) {
     event.preventDefault();
     setStatus("Saqlanmoqda...");
+    const trimmedUpdateUrl = settings.agentUpdateUrl.trim();
+    if (trimmedUpdateUrl && !/^https?:\/\//i.test(trimmedUpdateUrl)) {
+      setStatus("Agent update ZIP URL noto'g'ri. Bo'sh qoldiring yoki http/https URL yozing.");
+      return;
+    }
+
     try {
       const payload = {
         ...settings,
         emergencyUnlockPassword: settings.emergencyUnlockPassword.trim(),
         agentUpdateVersion: settings.agentUpdateVersion.trim(),
-        agentUpdateUrl: settings.agentUpdateUrl.trim()
+        agentUpdateUrl: trimmedUpdateUrl
       };
       const response = await api<{ settings: AppSettings }>("/settings", {
         method: "PUT",
@@ -55,7 +61,7 @@ export function Settings() {
       <form onSubmit={save} className="max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold">Settings</h1>
-          <button className="flex h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white" type="submit">
+          <button className="flex h-10 items-center gap-2 rounded bg-mint px-4 text-sm font-semibold text-white hover:bg-ink" type="submit">
             <Save size={16} />
             Saqlash
           </button>
@@ -126,7 +132,7 @@ export function Settings() {
         </label>
 
         <div className="sticky bottom-0 -mx-5 -mb-5 flex items-center gap-3 border-t border-line bg-white p-5">
-          <button className="flex h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white" type="submit">
+          <button className="flex h-10 items-center gap-2 rounded bg-mint px-4 text-sm font-semibold text-white hover:bg-ink" type="submit">
             <Save size={16} />
             Saqlash
           </button>

@@ -1,5 +1,5 @@
 import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Settings } from "lucide-react";
-import { NavLink, Outlet, Navigate } from "react-router-dom";
+import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getToken } from "../api/client";
 
 const nav = [
@@ -11,7 +11,21 @@ const nav = [
 ];
 
 export function Layout() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   if (!getToken()) return <Navigate to="/login" replace />;
+
+  async function go(to: string) {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // Navigation should still continue if exiting fullscreen is blocked.
+      }
+    }
+    navigate(to);
+  }
 
   async function requestFullscreen() {
     try {
@@ -38,20 +52,19 @@ export function Layout() {
         <nav className="relative z-40 flex gap-1 overflow-x-auto p-3 md:block">
           {nav.map((item) => {
             const Icon = item.icon;
+            const isActive = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
             return (
-              <NavLink
+              <button
                 key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) =>
-                  `mb-1 flex h-10 shrink-0 cursor-pointer items-center gap-3 rounded px-3 text-sm ${
-                    isActive ? "bg-ink text-white" : "text-slate-700 hover:bg-slate-100"
-                  }`
-                }
+                onClick={() => go(item.to)}
+                type="button"
+                className={`mb-1 flex h-10 w-full shrink-0 cursor-pointer items-center gap-3 rounded px-3 text-left text-sm ${
+                  isActive ? "bg-ink text-white" : "text-slate-700 hover:bg-slate-100"
+                }`}
               >
                 <Icon size={17} />
                 {item.label}
-              </NavLink>
+              </button>
             );
           })}
         </nav>
