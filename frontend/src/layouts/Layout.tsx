@@ -35,15 +35,16 @@ export function Layout() {
             <div className="text-xs text-slate-500">v1 Admin</div>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto p-3 md:block">
+        <nav className="relative z-40 flex gap-1 overflow-x-auto p-3 md:block">
           {nav.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
+                end={item.to === "/"}
                 className={({ isActive }) =>
-                  `mb-1 flex h-10 shrink-0 items-center gap-3 rounded px-3 text-sm ${
+                  `mb-1 flex h-10 shrink-0 cursor-pointer items-center gap-3 rounded px-3 text-sm ${
                     isActive ? "bg-ink text-white" : "text-slate-700 hover:bg-slate-100"
                   }`
                 }

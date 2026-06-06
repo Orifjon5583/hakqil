@@ -1,3 +1,4 @@
+import { Eye, EyeOff, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { api } from "../api/client";
 
@@ -20,6 +21,7 @@ const emptySettings: AppSettings = {
 export function Settings() {
   const [settings, setSettings] = useState<AppSettings>(emptySettings);
   const [status, setStatus] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     api<{ settings: AppSettings }>("/settings")
@@ -50,18 +52,36 @@ export function Settings() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold">Settings</h1>
-      <form onSubmit={save} className="mt-6 max-w-2xl space-y-5 rounded border border-line bg-white p-5">
+      <form onSubmit={save} className="max-w-4xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">Settings</h1>
+          <button className="flex h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white" type="submit">
+            <Save size={16} />
+            Saqlash
+          </button>
+        </div>
+
+        <div className="space-y-5 rounded border border-line bg-white p-5">
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Qo'lda blokdan ochish paroli</span>
-          <input
-            type="password"
-            className="mt-2 w-full rounded border border-line px-3 py-2"
-            value={settings.emergencyUnlockPassword}
-            onChange={(event) => setSettings({ ...settings, emergencyUnlockPassword: event.target.value })}
-            minLength={8}
-            required
-          />
+          <div className="mt-2 flex rounded border border-line bg-white">
+            <input
+              type={showPassword ? "text" : "password"}
+              className="h-11 min-w-0 flex-1 rounded-l px-3 outline-none"
+              value={settings.emergencyUnlockPassword}
+              onChange={(event) => setSettings({ ...settings, emergencyUnlockPassword: event.target.value })}
+              minLength={8}
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="flex h-11 w-12 items-center justify-center border-l border-line text-slate-600 hover:bg-slate-50"
+              title={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </label>
 
         <label className="flex items-center gap-3 text-sm">
@@ -105,11 +125,13 @@ export function Settings() {
           />
         </label>
 
-        <div className="flex items-center gap-3">
-          <button className="rounded bg-brand px-4 py-2 text-sm font-semibold text-white" type="submit">
+        <div className="sticky bottom-0 -mx-5 -mb-5 flex items-center gap-3 border-t border-line bg-white p-5">
+          <button className="flex h-10 items-center gap-2 rounded bg-brand px-4 text-sm font-semibold text-white" type="submit">
+            <Save size={16} />
             Saqlash
           </button>
           {status && <span className="text-sm text-slate-500">{status}</span>}
+        </div>
         </div>
       </form>
     </section>
