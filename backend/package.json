@@ -10,7 +10,8 @@
     "lint": "tsc --noEmit",
     "db:migrate": "tsx src/scripts/migrate.ts",
     "create-admin": "tsx src/scripts/createAdmin.ts",
-    "create-agent-token": "tsx src/scripts/createAgentToken.ts"
+    "create-agent-token": "tsx src/scripts/createAgentToken.ts",
+    "create-agent-tokens": "tsx src/scripts/createAgentTokens.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

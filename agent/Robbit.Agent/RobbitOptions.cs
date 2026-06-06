@@ -8,4 +8,5 @@ public sealed class RobbitOptions
     public string Brand { get; set; } = "";
     public string AgentVersion { get; set; } = "1.0.0";
     public int HeartbeatSeconds { get; set; } = 15;
+    public string EmergencyUnlockPassword { get; set; } = "";
 }

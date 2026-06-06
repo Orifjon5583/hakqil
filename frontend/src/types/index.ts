@@ -11,4 +11,6 @@ export type Device = {
   ip_address: string | null;
   os_version: string | null;
   agent_version: string | null;
+  active_window_title: string | null;
+  active_process_name: string | null;
 };

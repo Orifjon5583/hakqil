@@ -40,6 +40,12 @@ public sealed class RobbitApiClient
         response.EnsureSuccessStatusCode();
     }
 
-    private sealed record AgentCommandsResponse(IReadOnlyList<AgentCommand> Commands);
-}
+    public async Task<AgentSettings?> GetSettingsAsync(CancellationToken cancellationToken)
+    {
+        AgentSettingsResponse? response = await _http.GetFromJsonAsync<AgentSettingsResponse>("agent/settings", cancellationToken);
+        return response?.Settings;
+    }
 
+    private sealed record AgentCommandsResponse(IReadOnlyList<AgentCommand> Commands);
+    private sealed record AgentSettingsResponse(AgentSettings Settings);
+}

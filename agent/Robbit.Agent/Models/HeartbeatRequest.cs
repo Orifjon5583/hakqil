@@ -9,5 +9,7 @@ public sealed record HeartbeatRequest(
     DateTimeOffset LastActivityAt,
     string? IpAddress,
     string OsVersion,
-    string AgentVersion
+    string AgentVersion,
+    string? ActiveWindowTitle,
+    string? ActiveProcessName
 );

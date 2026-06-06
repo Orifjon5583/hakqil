@@ -58,6 +58,8 @@ export function DeviceDetail() {
           ["Device Code", device.device_code],
           ["Last Seen", device.last_seen_at ? new Date(device.last_seen_at).toLocaleString() : "-"],
           ["IP Address", device.ip_address],
+          ["Active Process", device.active_process_name],
+          ["Active Window", device.active_window_title],
           ["OS Version", device.os_version],
           ["Agent Version", device.agent_version]
         ].map(([k, v]) => (

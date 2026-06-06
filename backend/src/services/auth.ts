@@ -16,6 +16,5 @@ export function verifyAdminToken(token: string) {
 }
 
 export function verifyAgentToken(token: string) {
-  return jwt.verify(token, env.AGENT_JWT_SECRET) as { deviceId?: string };
+  return jwt.verify(token, env.AGENT_JWT_SECRET) as { deviceId?: string; deviceCode?: string };
 }
-

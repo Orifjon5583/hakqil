@@ -14,6 +14,7 @@ export function DeviceTable({ devices }: { devices: Device[] }) {
             <th className="px-4 py-3">Windows Username</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">IP Address</th>
+            <th className="px-4 py-3">Nima qilyapti</th>
             <th className="px-4 py-3">Last Seen</th>
             <th className="px-4 py-3">Actions</th>
           </tr>
@@ -27,6 +28,10 @@ export function DeviceTable({ devices }: { devices: Device[] }) {
               <td className="px-4 py-3">{device.windows_username ?? "-"}</td>
               <td className="px-4 py-3"><StatusBadge status={device.status} /></td>
               <td className="px-4 py-3">{device.ip_address ?? "-"}</td>
+              <td className="max-w-xs truncate px-4 py-3" title={device.active_window_title ?? undefined}>
+                {device.active_process_name ? `${device.active_process_name}: ` : ""}
+                {device.active_window_title ?? "-"}
+              </td>
               <td className="px-4 py-3">{device.last_seen_at ? new Date(device.last_seen_at).toLocaleString() : "-"}</td>
               <td className="px-4 py-3">
                 <Link className="text-mint hover:underline" to={`/devices/${device.id}`}>Detail</Link>

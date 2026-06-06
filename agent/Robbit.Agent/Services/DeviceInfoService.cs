@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Robbit.Agent.Models;
 
 namespace Robbit.Agent.Services;
@@ -16,6 +18,8 @@ public sealed class DeviceInfoService
 
     public HeartbeatRequest CreateHeartbeat()
     {
+        DesktopStatus? desktopStatus = ReadDesktopStatus();
+
         return new HeartbeatRequest(
             DeviceId: GetStableDeviceId(),
             DeviceCode: _options.DeviceCode,
@@ -25,7 +29,9 @@ public sealed class DeviceInfoService
             LastActivityAt: DateTimeOffset.UtcNow,
             IpAddress: GetIpAddress(),
             OsVersion: RuntimeInformation.OSDescription,
-            AgentVersion: _options.AgentVersion
+            AgentVersion: _options.AgentVersion,
+            ActiveWindowTitle: desktopStatus?.ActiveWindowTitle,
+            ActiveProcessName: desktopStatus?.ActiveProcessName
         );
     }
 
@@ -53,4 +59,26 @@ public sealed class DeviceInfoService
             .FirstOrDefault(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork && !IPAddress.IsLoopback(a.Address))
             ?.Address.ToString();
     }
+
+    private static DesktopStatus? ReadDesktopStatus()
+    {
+        string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RobbitMonitor", "desktop-status.json");
+        if (!File.Exists(path)) return null;
+
+        try
+        {
+            string json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<DesktopStatus>(json);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private sealed record DesktopStatus(
+        [property: JsonPropertyName("activeWindowTitle")] string? ActiveWindowTitle,
+        [property: JsonPropertyName("activeProcessName")] string? ActiveProcessName,
+        [property: JsonPropertyName("updatedAtUtc")] DateTimeOffset UpdatedAtUtc
+    );
 }

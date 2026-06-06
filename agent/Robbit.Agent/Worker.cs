@@ -10,19 +10,25 @@ public sealed class Worker : BackgroundService
     private readonly DeviceInfoService _deviceInfo;
     private readonly RobbitApiClient _api;
     private readonly CommandExecutor _executor;
+    private readonly AgentSettingsCache _settings;
+    private readonly DailyMaintenanceService _maintenance;
 
     public Worker(
         ILogger<Worker> logger,
         IOptions<RobbitOptions> options,
         DeviceInfoService deviceInfo,
         RobbitApiClient api,
-        CommandExecutor executor)
+        CommandExecutor executor,
+        AgentSettingsCache settings,
+        DailyMaintenanceService maintenance)
     {
         _logger = logger;
         _options = options.Value;
         _deviceInfo = deviceInfo;
         _api = api;
         _executor = executor;
+        _settings = settings;
+        _maintenance = maintenance;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -35,6 +41,13 @@ public sealed class Worker : BackgroundService
             {
                 var heartbeat = _deviceInfo.CreateHeartbeat();
                 await _api.SendHeartbeatAsync(heartbeat, stoppingToken);
+
+                var settings = await _api.GetSettingsAsync(stoppingToken);
+                if (settings is not null)
+                {
+                    _settings.Update(settings);
+                    await _maintenance.RunIfDueAsync(settings, stoppingToken);
+                }
 
                 var commands = await _api.GetCommandsAsync(heartbeat.DeviceId, stoppingToken);
                 foreach (var command in commands)
@@ -52,4 +65,3 @@ public sealed class Worker : BackgroundService
         }
     }
 }
-

@@ -1,4 +1,5 @@
-import { Activity, Camera, ClipboardList, LayoutDashboard, Monitor, Settings } from "lucide-react";
+import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Settings } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink, Outlet, Navigate } from "react-router-dom";
 import { getToken } from "../api/client";
 
@@ -12,6 +13,20 @@ const nav = [
 
 export function Layout() {
   if (!getToken()) return <Navigate to="/login" replace />;
+
+  async function requestFullscreen() {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      // Browsers may require a user click for fullscreen.
+    }
+  }
+
+  useEffect(() => {
+    requestFullscreen();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -46,9 +61,18 @@ export function Layout() {
         </nav>
       </aside>
       <main className="ml-64 min-h-screen px-8 py-6">
+        <div className="mb-4 flex justify-end">
+          <button
+            onClick={requestFullscreen}
+            className="flex h-9 items-center gap-2 rounded border border-line bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
+            type="button"
+          >
+            <Maximize2 size={15} />
+            Fullscreen
+          </button>
+        </div>
         <Outlet />
       </main>
     </div>
   );
 }
-
