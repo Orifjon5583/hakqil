@@ -1,4 +1,5 @@
-import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Settings } from "lucide-react";
+import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { getToken } from "../api/client";
 
@@ -12,6 +13,12 @@ const nav = [
 
 export function Layout() {
   const location = useLocation();
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("robbit_theme") === "dark");
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    localStorage.setItem("robbit_theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   if (!getToken()) return <Navigate to="/login" replace />;
 
@@ -58,6 +65,14 @@ export function Layout() {
       </aside>
       <main className="min-h-screen px-4 pb-6 pt-36 md:ml-64 md:px-8 md:py-6">
         <div className="mb-4 flex justify-end">
+          <button
+            onClick={() => setDarkMode((value) => !value)}
+            className="mr-2 flex h-9 items-center gap-2 rounded border border-line bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
+            type="button"
+          >
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+            {darkMode ? "Kun rejimi" : "Tungi rejim"}
+          </button>
           <button
             onClick={requestFullscreen}
             className="flex h-9 items-center gap-2 rounded border border-line bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
