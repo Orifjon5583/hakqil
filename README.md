@@ -1,152 +1,61 @@
-# Dars nazorati
+# Robbit Monitor v1
 
-`Dars nazorati` o'quv markazida ruxsat bilan ishlatiladigan ekran kuzatuv
-ilovasi. Student Agent ochilganda ekranda doim ko'rinadigan kichik oyna chiqadi.
-U faqat asosiy monitor screenshotini yuboradi. Klaviatura, sichqoncha, fayllar,
-kamera, mikrofon, parollar va cookie ma'lumotlariga tegmaydi.
+Akademiya kompyuterlarini bitta web panel orqali qonuniy, shaffof va auditli tarzda kuzatish va boshqarish tizimi.
 
-## Fayllar
+## Stack
 
-- `student_agent.py` - o'quvchi kompyuterida ishlaydigan ko'rinadigan agent.
-- `teacher_server.py` - screenshot qabul qiladigan Flask server.
-- `templates/dashboard.html` - ustoz dashboardi.
-- `.env.example` - sozlamalar namunasi.
+- Frontend: React, TypeScript, TailwindCSS, Vite
+- Backend: Node.js, Express, TypeScript
+- Database: PostgreSQL
+- Desktop Agent: C# .NET Worker Service / Windows Service
+- Server: Ubuntu VPS, HTTPS reverse proxy
 
-## Python va kutubxonalarni o'rnatish
+## Muhim tamoyillar
 
-1. Windows uchun Python 3.11 yoki yangi versiyani
-   [python.org](https://www.python.org/downloads/windows/) saytidan o'rnating.
-   O'rnatishda `Add Python to PATH` belgisini yoqing.
-2. Loyiha papkasida PowerShell oching.
-3. Virtual muhit yarating va kutubxonalarni o'rnating:
+- Agent akademiyaga tegishli kompyuterlarda ishlaydi.
+- O'quvchilar monitoring mavjudligini biladi.
+- Har bir admin amali `audit_logs` jadvaliga yoziladi.
+- Screenshot/camera/lock/message kabi amallar yashirin emas, siyosat va ruxsatlar bilan ishlatiladi.
+- MVP faqat `admin` rolini qo'llab-quvvatlaydi.
+
+## Papkalar
+
+- `backend` - Express API va PostgreSQL migratsiyalari
+- `frontend` - React admin panel
+- `agent` - C# Windows Service starter
+- `docs` - arxitektura, API, DB schema, roadmap
+
+## Tez start
+
+Backend:
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Agent:
 
 ```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+cd agent/Robbit.Agent
+dotnet build
 ```
 
-## `.env` sozlash
+To'liq texnik tavsif: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
-`.env.example` faylidan `.env` nusxa yarating. Bir kompyuterda server va agentni
-sinash mumkin. Alohida kompyuterlarda har biriga kerakli qatorlarni o'z `.env`
-fayliga joylashtiring.
+Qo'shimcha hujjatlar:
 
-Teacher Server uchun:
-
-```dotenv
-API_TOKEN=uzun_va_tasodifiy_token
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=mustahkam_dashboard_paroli
-OFFLINE_SECONDS=10
-HOST=0.0.0.0
-PORT=5000
-```
-
-Student Agent uchun:
-
-```dotenv
-SERVER_URL=https://server-manzili.example/upload
-API_TOKEN=uzun_va_tasodifiy_token
-STUDENT_NAME=HP-1
-CAPTURE_INTERVAL=1
-MAX_WIDTH=1280
-JPEG_QUALITY=60
-```
-
-Har bir o'quvchi kompyuterida `STUDENT_NAME` noyob bo'lishi kerak: `HP-1`,
-`HP-2` va hokazo. Agent rasmni 1280 piksel en va 720 piksel balandlikdan
-oshirmaydi. `API_TOKEN` server va barcha ruxsatli agentlarda aynan bir xil
-bo'lishi kerak.
-
-## Teacher Serverni ishga tushirish
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python teacher_server.py
-```
-
-Dashboardni `http://localhost:5000/` manzilida oching. Brauzer `.env` dagi
-`ADMIN_USERNAME` va `ADMIN_PASSWORD` ni so'raydi.
-
-## Student Agentni ishga tushirish
-
-Oddiy sinov uchun:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python student_agent.py
-```
-
-Windowsda CMD oynasisiz ishga tushirish uchun virtual muhitdagi `pythonw.exe`
-dan foydalaning:
-
-```powershell
-.\.venv\Scripts\pythonw.exe student_agent.py
-```
-
-Agent oynasi ko'rinib turadi va unda `Dars nazorati ishlayapti`, ulanish holati
-hamda `Stop` tugmasi bor. `Stop` uzatishni to'xtatadi va agentni yopadi.
-
-## Windows startup'ga qo'shish
-
-Agent yashirin service sifatida o'rnatilmaydi. Windows login qilinganda
-ko'rinadigan oynasi bilan ochilishi uchun:
-
-1. `Win + R` bosing, `shell:startup` yozing va Enter bosing.
-2. Ochilgan Startup papkasida yangi shortcut yarating.
-3. Shortcut target qatoriga to'liq yo'llarni kiriting:
-
-```text
-"C:\dars\.venv\Scripts\pythonw.exe" "C:\dars\student_agent.py"
-```
-
-4. `Start in` qatoriga loyiha papkasini kiriting, masalan `C:\dars`.
-5. Har bir o'quvchi kompyuteridagi `.env` faylida o'z `STUDENT_NAME` qiymatini
-   tekshiring.
-
-## Lokal Wi-Fi tarmog'ida ishlatish
-
-1. Teacher Server ishlaydigan kompyuterning lokal IP manzilini `ipconfig`
-   orqali toping, masalan `192.168.1.10`.
-2. Windows Firewall'da tanlangan portga, masalan `5000`, faqat lokal tarmoqdan
-   kirishga ruxsat bering.
-3. Dastlab lokal sinovda student `.env` faylida quyidagini ishlatish mumkin:
-
-```dotenv
-SERVER_URL=http://192.168.1.10:5000/upload
-```
-
-Amaliy foydalanishda lokal tarmoqda ham HTTPS tavsiya qilinadi.
-
-## Internet server va HTTPS
-
-Internet orqali ishlatganda Flask development serverini bevosita internetga
-ochmang. Domenli serverda Flask ilovasini production WSGI server bilan
-ishlating va oldiga Nginx yoki Caddy reverse proxy qo'ying. HTTPS sertifikatini
-Let's Encrypt orqali sozlang. Shundan keyin agentlarda:
-
-```dotenv
-SERVER_URL=https://dars.example.com/upload
-```
-
-HTTPS screenshot va tokenni tarmoqda shifrlaydi. `API_TOKEN` hamda dashboard
-parolini uzun va tasodifiy tanlang, ularni repozitoriyga joylamang. Internet
-serverida firewall orqali faqat HTTPS portini oching.
-
-## Ruxsat va maxfiylik qoidalari
-
-- O'quvchi va ota-ona yoki qonuniy vakilga kuzatuv haqida oldindan tushuntiring.
-- Mahalliy qonun va o'quv markaz siyosatiga mos yozma ruxsat oling.
-- Agent oynasini yashirmang va uni yashirin service sifatida o'rnatmang.
-- Screenshotlarga faqat vakolatli ustozlar dashboard login orqali kirsin.
-- Kerak bo'lmagan screenshotlarni saqlamang. Ushbu dastur faqat har bir student
-  uchun eng oxirgi screenshotni server xotirasida saqlaydi; server qayta
-  ishga tushsa ular o'chadi.
-- `API_TOKEN`, admin login va admin parolini `.env` faylida saqlang.
-
-## Xatoliklarni ko'rish
-
-Teacher Server loglarni terminalga chiqaradi. Student Agent loglarni
-`student_agent.log` fayliga yozadi. Agentni `python` bilan ishga tushirsangiz
-ular terminalda ham ko'rinadi. Logda screenshotning o'zi saqlanmaydi.
+- [Deploy rejasi](docs/DEPLOYMENT.md)
+- [Security architecture](docs/SECURITY.md)
+- [Installer tuzilishi](docs/INSTALLER.md)
+- [Production checklist](docs/PRODUCTION_CHECKLIST.md)
