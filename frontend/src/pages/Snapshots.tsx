@@ -13,13 +13,18 @@ type Snapshot = {
 
 export function Snapshots() {
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
+  const [status, setStatus] = useState("Yuklanmoqda...");
 
   async function load() {
     const result = await api<{ snapshots: Snapshot[] }>("/snapshots");
     setSnapshots(result.snapshots);
+    setStatus(result.snapshots.length === 0 ? "Snapshotlar hali yo'q" : "");
   }
 
-  useEffect(() => { load().catch(() => setSnapshots([])); }, []);
+  useEffect(() => { load().catch(() => {
+    setSnapshots([]);
+    setStatus("Snapshotlarni yuklab bo'lmadi");
+  }); }, []);
 
   async function remove(id: string) {
     await api(`/snapshots/${id}`, { method: "DELETE" });
@@ -29,6 +34,7 @@ export function Snapshots() {
   return (
     <section>
       <h1 className="text-2xl font-semibold">Snapshot gallery</h1>
+      {status && <div className="mt-6 rounded border border-line bg-white p-4 text-sm text-slate-500">{status}</div>}
       <div className="mt-6 grid grid-cols-4 gap-4">
         {snapshots.map((item) => (
           <div key={item.id} className="overflow-hidden rounded border border-line bg-white">
@@ -50,4 +56,3 @@ export function Snapshots() {
     </section>
   );
 }
-
