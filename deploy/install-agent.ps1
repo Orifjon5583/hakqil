@@ -48,6 +48,7 @@ if ($existing) {
 
 New-Item -ItemType Directory -Force -Path $InstallPath | Out-Null
 Copy-Item -Path (Join-Path $SourcePath "*") -Destination $InstallPath -Recurse -Force
+Get-ChildItem -Path $InstallPath -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
 
 $programDataPath = Join-Path $env:ProgramData "RobbitMonitor"
 New-Item -ItemType Directory -Force -Path $programDataPath | Out-Null
@@ -78,7 +79,8 @@ $desktopExe = Join-Path $InstallPath "Robbit.Agent.Desktop.exe"
 if (Test-Path $desktopExe) {
     $runKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
     New-ItemProperty -Path $runKey -Name "Robbit Monitor Desktop" -Value "`"$desktopExe`"" -PropertyType String -Force | Out-Null
-    Start-Process -FilePath $desktopExe -WindowStyle Hidden
+    Get-Process -Name "Robbit.Agent.Desktop" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Process -FilePath $desktopExe
     Write-Host "Desktop companion autostart sozlandi."
 } else {
     Write-Warning "Robbit.Agent.Desktop.exe topilmadi. Lock/message oynalari user sessionda chiqmaydi."

@@ -9,6 +9,7 @@ build/
 bin/
 obj/
 deploy/publish/
+deploy/*.zip
 *.user
 *.log
 dashboard-screenshot.png
