@@ -31,14 +31,20 @@ export function Settings() {
     event.preventDefault();
     setStatus("Saqlanmoqda...");
     try {
+      const payload = {
+        ...settings,
+        emergencyUnlockPassword: settings.emergencyUnlockPassword.trim(),
+        agentUpdateVersion: settings.agentUpdateVersion.trim(),
+        agentUpdateUrl: settings.agentUpdateUrl.trim()
+      };
       const response = await api<{ settings: AppSettings }>("/settings", {
         method: "PUT",
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       });
       setSettings(response.settings);
-      setStatus("Sozlamalar saqlandi");
-    } catch {
-      setStatus("Saqlashda xatolik bo'ldi");
+      setStatus("Sozlamalar saqlandi. Agentlar keyingi heartbeatda yangi parolni oladi.");
+    } catch (error) {
+      setStatus(error instanceof Error ? `Saqlashda xatolik: ${error.message}` : "Saqlashda xatolik bo'ldi");
     }
   }
 
@@ -49,6 +55,7 @@ export function Settings() {
         <label className="block text-sm">
           <span className="font-medium text-slate-700">Qo'lda blokdan ochish paroli</span>
           <input
+            type="password"
             className="mt-2 w-full rounded border border-line px-3 py-2"
             value={settings.emergencyUnlockPassword}
             onChange={(event) => setSettings({ ...settings, emergencyUnlockPassword: event.target.value })}

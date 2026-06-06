@@ -7,11 +7,11 @@ import { writeAudit } from "../services/audit.js";
 export const settingsRouter = Router();
 
 const settingsSchema = z.object({
-  emergencyUnlockPassword: z.string().min(8).max(120),
+  emergencyUnlockPassword: z.string().trim().min(8).max(120),
   dailyShutdownEnabled: z.boolean(),
   dailyShutdownTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-  agentUpdateVersion: z.string().min(1).max(40),
-  agentUpdateUrl: z.string().url().or(z.literal(""))
+  agentUpdateVersion: z.string().trim().min(1).max(40),
+  agentUpdateUrl: z.string().trim().url().or(z.literal(""))
 });
 
 settingsRouter.get("/", requireAdmin, async (_req, res) => {

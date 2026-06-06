@@ -15,7 +15,19 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     }
   });
 
-  if (!response.ok) throw new Error(`API error ${response.status}`);
+  if (!response.ok) {
+    let message = `API error ${response.status}`;
+    try {
+      const body = await response.json();
+      if (typeof body?.error === "string") message = body.error;
+      if (Array.isArray(body?.details) && body.details[0]?.message) {
+        message = body.details[0].message;
+      }
+    } catch {
+      // Keep the status-based message when the response is not JSON.
+    }
+    throw new Error(message);
+  }
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
 }

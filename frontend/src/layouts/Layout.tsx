@@ -1,5 +1,4 @@
 import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Settings } from "lucide-react";
-import { useEffect } from "react";
 import { NavLink, Outlet, Navigate } from "react-router-dom";
 import { getToken } from "../api/client";
 
@@ -24,13 +23,9 @@ export function Layout() {
     }
   }
 
-  useEffect(() => {
-    requestFullscreen();
-  }, []);
-
   return (
     <div className="min-h-screen">
-      <aside className="fixed inset-y-0 left-0 w-64 border-r border-line bg-white">
+      <aside className="fixed inset-x-0 top-0 z-30 border-b border-line bg-white md:inset-y-0 md:left-0 md:right-auto md:w-64 md:border-b-0 md:border-r">
         <div className="flex h-16 items-center gap-3 border-b border-line px-5">
           <div className="flex h-9 w-9 items-center justify-center rounded bg-mint text-white">
             <Activity size={18} />
@@ -40,7 +35,7 @@ export function Layout() {
             <div className="text-xs text-slate-500">v1 Admin</div>
           </div>
         </div>
-        <nav className="p-3">
+        <nav className="flex gap-1 overflow-x-auto p-3 md:block">
           {nav.map((item) => {
             const Icon = item.icon;
             return (
@@ -48,7 +43,7 @@ export function Layout() {
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `mb-1 flex h-10 items-center gap-3 rounded px-3 text-sm ${
+                  `mb-1 flex h-10 shrink-0 items-center gap-3 rounded px-3 text-sm ${
                     isActive ? "bg-ink text-white" : "text-slate-700 hover:bg-slate-100"
                   }`
                 }
@@ -60,7 +55,7 @@ export function Layout() {
           })}
         </nav>
       </aside>
-      <main className="ml-64 min-h-screen px-8 py-6">
+      <main className="min-h-screen px-4 pb-6 pt-36 md:ml-64 md:px-8 md:py-6">
         <div className="mb-4 flex justify-end">
           <button
             onClick={requestFullscreen}
