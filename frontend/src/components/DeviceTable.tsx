@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Device } from "../types";
 import { StatusBadge } from "./StatusBadge";
 
 export function DeviceTable({ devices }: { devices: Device[] }) {
+  const navigate = useNavigate();
+
   return (
     <>
     <div className="space-y-3 md:hidden">
@@ -65,7 +67,11 @@ export function DeviceTable({ devices }: { devices: Device[] }) {
         </thead>
         <tbody>
           {devices.map((device) => (
-            <tr key={device.id} className="border-b border-line last:border-0">
+            <tr
+              key={device.id}
+              className="cursor-pointer border-b border-line last:border-0 hover:bg-slate-50"
+              onClick={() => navigate(`/devices/${device.id}`)}
+            >
               <td className="px-4 py-3 font-medium">{device.device_code}</td>
               <td className="px-4 py-3">{device.brand}</td>
               <td className="px-4 py-3">{device.computer_name ?? "-"}</td>
@@ -77,7 +83,7 @@ export function DeviceTable({ devices }: { devices: Device[] }) {
                 {device.active_window_title ?? "-"}
               </td>
               <td className="px-4 py-3">{device.last_seen_at ? new Date(device.last_seen_at).toLocaleString() : "-"}</td>
-              <td className="px-4 py-3">
+              <td className="px-4 py-3" onClick={(event) => event.stopPropagation()}>
                 <Link className="text-mint hover:underline" to={`/devices/${device.id}`}>Detail</Link>
               </td>
             </tr>

@@ -1,4 +1,4 @@
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Plus, X } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { DeviceTable } from "../components/DeviceTable";
@@ -23,6 +23,7 @@ export function Devices() {
   const [tokenResult, setTokenResult] = useState<AgentTokenResult | null>(null);
   const [tokenStatus, setTokenStatus] = useState("");
   const [showToken, setShowToken] = useState(false);
+  const [showAddDevice, setShowAddDevice] = useState(false);
 
   const defaultApiBaseUrl = useMemo(() => `${window.location.origin}/api`, []);
 
@@ -78,6 +79,15 @@ export function Devices() {
     <section>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Qurilmalar</h1>
+        <div className="flex flex-col gap-2 sm:flex-row">
+        <button
+          className="flex h-10 items-center justify-center gap-2 rounded bg-mint px-4 text-sm font-medium text-white"
+          type="button"
+          onClick={() => setShowAddDevice((value) => !value)}
+        >
+          {showAddDevice ? <X size={16} /> : <Plus size={16} />}
+          {showAddDevice ? "Yopish" : "Kompyuter qo'shish"}
+        </button>
         <div className="flex max-w-full overflow-x-auto rounded border border-line bg-white p-1">
           {filters.map((filter) => (
             <button
@@ -89,11 +99,13 @@ export function Devices() {
             </button>
           ))}
         </div>
+        </div>
       </div>
       <div className="mt-5">
         <DeviceTable devices={visibleDevices} />
       </div>
 
+      {showAddDevice && (
       <form onSubmit={createAgentToken} className="mt-6 rounded border border-line bg-white p-4">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -168,6 +180,7 @@ export function Devices() {
 
         {tokenStatus && <div className="mt-3 text-sm text-slate-500">{tokenStatus}</div>}
       </form>
+      )}
     </section>
   );
 }
