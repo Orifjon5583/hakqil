@@ -67,6 +67,12 @@ devicesRouter.post("/agent-token", async (req, res) => {
     `-Brand "${brand}"`
   ].join(" ");
 
+  await query(
+    `INSERT INTO agent_tokens (device_code, brand, api_base_url, token, created_by)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [deviceCode, brand, apiBaseUrl, token, req.user?.sub ?? null]
+  );
+
   res.json({
     token,
     deviceCode,
@@ -84,7 +90,17 @@ devicesRouter.get("/:id", async (req, res) => {
   );
   const device = result.rows[0];
   if (!device) return res.status(404).json({ error: "Device not found" });
-  res.json({ device });
+
+  const tokens = await query(
+    `SELECT id, device_code, brand, api_base_url, token, created_at
+     FROM agent_tokens
+     WHERE device_code = $1
+     ORDER BY created_at DESC
+     LIMIT 20`,
+    [device.device_code]
+  );
+
+  res.json({ device, agentTokens: tokens.rows });
 });
 
 function commandRoute(type: CommandType) {

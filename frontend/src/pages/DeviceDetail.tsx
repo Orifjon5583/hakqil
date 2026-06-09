@@ -1,4 +1,4 @@
-import { Camera, Lock, MessageSquare, Power, RotateCcw, ScreenShare, Unlock } from "lucide-react";
+import { Camera, Copy, Eye, EyeOff, Lock, MessageSquare, Power, RotateCcw, ScreenShare, Unlock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -22,21 +22,41 @@ type AuditLog = {
   created_at: string;
 };
 
+type AgentToken = {
+  id: string;
+  device_code: string;
+  brand: string;
+  api_base_url: string;
+  token: string;
+  created_at: string;
+};
+
 export function DeviceDetail() {
   const { id } = useParams();
   const [device, setDevice] = useState<Device | null>(null);
+  const [agentTokens, setAgentTokens] = useState<AgentToken[]>([]);
+  const [visibleTokens, setVisibleTokens] = useState<Record<string, boolean>>({});
+  const [tokenStatus, setTokenStatus] = useState("");
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [message, setMessage] = useState("Darsga e'tibor bering");
 
   useEffect(() => {
     if (!id) return;
-    api<{ device: Device }>(`/devices/${id}`).then((r) => setDevice(r.device));
+    api<{ device: Device; agentTokens: AgentToken[] }>(`/devices/${id}`).then((r) => {
+      setDevice(r.device);
+      setAgentTokens(r.agentTokens ?? []);
+    });
     api<{ auditLogs: AuditLog[] }>("/audit-logs").then((r) => setLogs(r.auditLogs)).catch(() => setLogs([]));
   }, [id]);
 
   async function run(path: string, payload?: Record<string, unknown>) {
     if (!id) return;
     await api(`/devices/${id}/${path}`, { method: "POST", body: JSON.stringify(payload ?? {}) });
+  }
+
+  async function copyToken(token: string) {
+    await navigator.clipboard.writeText(token);
+    setTokenStatus("Token nusxalandi.");
   }
 
   if (!device) return <div>Loading...</div>;
@@ -90,6 +110,52 @@ export function DeviceDetail() {
             Message yuborish
           </button>
         </div>
+      </div>
+
+      <div className="mt-6 rounded border border-line bg-white p-4">
+        <div className="mb-3 text-sm font-semibold">Agent tokenlar</div>
+        {agentTokens.length === 0 && (
+          <div className="text-sm text-slate-500">Bu kompyuter uchun sayt orqali yaratilgan token hali yo'q.</div>
+        )}
+        <div className="space-y-3">
+          {agentTokens.map((item) => {
+            const show = visibleTokens[item.id] ?? false;
+            return (
+              <div key={item.id} className="rounded border border-line bg-slate-50 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                  <span>{item.device_code} / {item.brand}</span>
+                  <span>{new Date(item.created_at).toLocaleString()}</span>
+                </div>
+                <div className="flex rounded border border-line bg-white">
+                  <input
+                    className="h-10 min-w-0 flex-1 rounded-l px-3 font-mono text-xs outline-none"
+                    readOnly
+                    type={show ? "text" : "password"}
+                    value={item.token}
+                  />
+                  <button
+                    className="flex h-10 w-11 items-center justify-center border-l border-line text-slate-600 hover:bg-slate-50"
+                    type="button"
+                    onClick={() => setVisibleTokens((values) => ({ ...values, [item.id]: !show }))}
+                    title={show ? "Tokenni yashirish" : "Tokenni ko'rsatish"}
+                  >
+                    {show ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                  <button
+                    className="flex h-10 items-center gap-2 border-l border-line px-3 text-sm text-slate-700 hover:bg-slate-50"
+                    type="button"
+                    onClick={() => copyToken(item.token)}
+                  >
+                    <Copy size={15} />
+                    Copy
+                  </button>
+                </div>
+                <div className="mt-2 text-xs text-slate-500">{item.api_base_url}</div>
+              </div>
+            );
+          })}
+        </div>
+        {tokenStatus && <div className="mt-3 text-sm text-slate-500">{tokenStatus}</div>}
       </div>
 
       <div className="mt-6 rounded border border-line bg-white p-4">
