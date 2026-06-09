@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { DeviceTable } from "../components/DeviceTable";
@@ -21,6 +22,7 @@ export function Devices() {
   const [brand, setBrand] = useState("");
   const [tokenResult, setTokenResult] = useState<AgentTokenResult | null>(null);
   const [tokenStatus, setTokenStatus] = useState("");
+  const [showToken, setShowToken] = useState(false);
 
   const defaultApiBaseUrl = useMemo(() => `${window.location.origin}/api`, []);
 
@@ -51,6 +53,7 @@ export function Devices() {
         })
       });
       setTokenResult(result);
+      setShowToken(false);
       setDeviceCode(result.deviceCode);
       setBrand(result.brand);
       setTokenStatus("Token tayyor. Bu tokenni faqat shu kompyuter installida ishlating.");
@@ -63,6 +66,12 @@ export function Devices() {
     if (!tokenResult) return;
     await navigator.clipboard.writeText(tokenResult.installCommand);
     setTokenStatus("Install command nusxalandi.");
+  }
+
+  async function copyToken() {
+    if (!tokenResult) return;
+    await navigator.clipboard.writeText(tokenResult.token);
+    setTokenStatus("Token nusxalandi.");
   }
 
   return (
@@ -120,12 +129,40 @@ export function Devices() {
         </div>
 
         {tokenResult && (
-          <div className="mt-4 rounded border border-line bg-slate-50 p-3">
+          <div className="mt-4 space-y-3 rounded border border-line bg-slate-50 p-3">
+            <div>
+              <div className="text-xs uppercase text-slate-500">Agent token</div>
+              <div className="mt-2 flex rounded border border-line bg-white">
+                <input
+                  className="h-10 min-w-0 flex-1 rounded-l px-3 font-mono text-xs outline-none"
+                  readOnly
+                  type={showToken ? "text" : "password"}
+                  value={tokenResult.token}
+                />
+                <button
+                  className="flex h-10 w-11 items-center justify-center border-l border-line text-slate-600 hover:bg-slate-50"
+                  type="button"
+                  onClick={() => setShowToken((value) => !value)}
+                  title={showToken ? "Tokenni yashirish" : "Tokenni ko'rsatish"}
+                >
+                  {showToken ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+                <button
+                  className="h-10 border-l border-line px-3 text-sm text-slate-700 hover:bg-slate-50"
+                  type="button"
+                  onClick={copyToken}
+                >
+                  Tokenni olish
+                </button>
+              </div>
+            </div>
+            <div>
             <div className="text-xs uppercase text-slate-500">Install command</div>
             <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-3 text-xs">{tokenResult.installCommand}</pre>
             <button className="mt-3 h-9 rounded border border-line bg-white px-3 text-sm text-slate-700" type="button" onClick={copyInstallCommand}>
               Nusxa olish
             </button>
+            </div>
           </div>
         )}
 
