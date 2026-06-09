@@ -72,6 +72,8 @@ icacls $settingsPath /inheritance:r /grant "SYSTEM:F" /grant "Administrators:F" 
 
 $exePath = Join-Path $InstallPath "Robbit.Agent.exe"
 sc.exe create $ServiceName binPath= "`"$exePath`"" start= auto | Out-Null
+sc.exe config $ServiceName start= delayed-auto | Out-Null
+sc.exe failure $ServiceName reset= 86400 actions= restart/60000/restart/60000/restart/60000 | Out-Null
 sc.exe description $ServiceName "Robbit Monitor authorized classroom monitoring agent" | Out-Null
 Start-Service -Name $ServiceName
 

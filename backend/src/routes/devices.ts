@@ -4,12 +4,19 @@ import { query } from "../db/pool.js";
 import { requireAdmin } from "../middleware/auth.js";
 import { createCommand, type CommandType } from "../services/commands.js";
 import { env } from "../config/env.js";
+import { signAgentToken } from "../services/auth.js";
 
 export const devicesRouter = Router();
 devicesRouter.use(requireAdmin);
 
 const commandPayload = z.object({
   message: z.string().min(1).max(500).optional()
+});
+
+const agentTokenPayload = z.object({
+  deviceCode: z.string().trim().min(4).max(20).regex(/^[A-Za-z0-9-]+$/),
+  brand: z.string().trim().min(1).max(80),
+  apiBaseUrl: z.string().trim().url()
 });
 
 function statusSql() {
@@ -44,6 +51,30 @@ devicesRouter.get("/", async (req, res) => {
   );
 
   res.json({ devices: result.rows });
+});
+
+devicesRouter.post("/agent-token", async (req, res) => {
+  const body = agentTokenPayload.parse(req.body ?? {});
+  const deviceCode = body.deviceCode.toUpperCase();
+  const brand = body.brand.trim();
+  const apiBaseUrl = body.apiBaseUrl.replace(/\/+$/, "");
+  const token = signAgentToken(deviceCode);
+  const installCommand = [
+    ".\\install-agent.ps1",
+    `-ApiBaseUrl "${apiBaseUrl}"`,
+    `-AgentToken "${token}"`,
+    `-DeviceCode "${deviceCode}"`,
+    `-Brand "${brand}"`
+  ].join(" ");
+
+  res.json({
+    token,
+    deviceCode,
+    brand,
+    apiBaseUrl,
+    expiresInDays: 365,
+    installCommand
+  });
 });
 
 devicesRouter.get("/:id", async (req, res) => {

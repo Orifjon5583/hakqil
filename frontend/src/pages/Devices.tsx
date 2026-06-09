@@ -1,13 +1,28 @@
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
 import { DeviceTable } from "../components/DeviceTable";
 import type { Device } from "../types";
 
 const statusFilters = ["Online", "Offline"];
 
+type AgentTokenResult = {
+  token: string;
+  deviceCode: string;
+  brand: string;
+  apiBaseUrl: string;
+  expiresInDays: number;
+  installCommand: string;
+};
+
 export function Devices() {
   const [active, setActive] = useState("All");
   const [devices, setDevices] = useState<Device[]>([]);
+  const [deviceCode, setDeviceCode] = useState("");
+  const [brand, setBrand] = useState("");
+  const [tokenResult, setTokenResult] = useState<AgentTokenResult | null>(null);
+  const [tokenStatus, setTokenStatus] = useState("");
+
+  const defaultApiBaseUrl = useMemo(() => `${window.location.origin}/api`, []);
 
   useEffect(() => {
     api<{ devices: Device[] }>("/devices").then((r) => setDevices(r.devices)).catch(() => setDevices([]));
@@ -20,6 +35,35 @@ export function Devices() {
     if (active === "Online" || active === "Offline") return device.status === active.toLowerCase();
     return device.brand === active;
   });
+
+  async function createAgentToken(event: FormEvent) {
+    event.preventDefault();
+    setTokenStatus("Token yaratilmoqda...");
+    setTokenResult(null);
+
+    try {
+      const result = await api<AgentTokenResult>("/devices/agent-token", {
+        method: "POST",
+        body: JSON.stringify({
+          deviceCode,
+          brand,
+          apiBaseUrl: defaultApiBaseUrl
+        })
+      });
+      setTokenResult(result);
+      setDeviceCode(result.deviceCode);
+      setBrand(result.brand);
+      setTokenStatus("Token tayyor. Bu tokenni faqat shu kompyuter installida ishlating.");
+    } catch (error) {
+      setTokenStatus(error instanceof Error ? `Xatolik: ${error.message}` : "Token yaratib bo'lmadi");
+    }
+  }
+
+  async function copyInstallCommand() {
+    if (!tokenResult) return;
+    await navigator.clipboard.writeText(tokenResult.installCommand);
+    setTokenStatus("Install command nusxalandi.");
+  }
 
   return (
     <section>
@@ -40,6 +84,53 @@ export function Devices() {
       <div className="mt-5">
         <DeviceTable devices={visibleDevices} />
       </div>
+
+      <form onSubmit={createAgentToken} className="mt-6 rounded border border-line bg-white p-4">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-sm font-semibold">Kompyuter qo'shish</h2>
+            <p className="text-xs text-slate-500">Device code va brand kiriting, agent token va install command oling.</p>
+          </div>
+          <button className="mt-3 h-10 rounded bg-ink px-4 text-sm font-medium text-white sm:mt-0" type="submit">
+            Token yaratish
+          </button>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="text-sm">
+            <span className="font-medium text-slate-700">Device Code</span>
+            <input
+              className="mt-2 h-10 w-full rounded border border-line px-3 uppercase"
+              placeholder="HP-01"
+              value={deviceCode}
+              onChange={(event) => setDeviceCode(event.target.value.toUpperCase())}
+              required
+            />
+          </label>
+          <label className="text-sm">
+            <span className="font-medium text-slate-700">Brand</span>
+            <input
+              className="mt-2 h-10 w-full rounded border border-line px-3"
+              placeholder="HP"
+              value={brand}
+              onChange={(event) => setBrand(event.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        {tokenResult && (
+          <div className="mt-4 rounded border border-line bg-slate-50 p-3">
+            <div className="text-xs uppercase text-slate-500">Install command</div>
+            <pre className="mt-2 max-h-36 overflow-auto whitespace-pre-wrap break-all rounded bg-white p-3 text-xs">{tokenResult.installCommand}</pre>
+            <button className="mt-3 h-9 rounded border border-line bg-white px-3 text-sm text-slate-700" type="button" onClick={copyInstallCommand}>
+              Nusxa olish
+            </button>
+          </div>
+        )}
+
+        {tokenStatus && <div className="mt-3 text-sm text-slate-500">{tokenStatus}</div>}
+      </form>
     </section>
   );
 }

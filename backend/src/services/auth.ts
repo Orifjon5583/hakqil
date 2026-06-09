@@ -11,6 +11,10 @@ export function signAdminToken(payload: JwtPayload) {
   return jwt.sign(payload, env.JWT_SECRET, { expiresIn: "8h" });
 }
 
+export function signAgentToken(deviceCode: string) {
+  return jwt.sign({ deviceCode }, env.AGENT_JWT_SECRET, { expiresIn: "365d" });
+}
+
 export function verifyAdminToken(token: string) {
   return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 }
