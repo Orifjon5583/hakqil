@@ -122,14 +122,29 @@ const resultSchema = z.object({
 
 agentRouter.post("/result", asyncRoute(async (req: any, res: any) => {
   const body = resultSchema.parse(req.body);
-  await query(
+  const updated = await query<{ device_id: string; requested_by: string | null; type: "screenshot" | "camera" | string }>(
     `UPDATE commands c
      SET status = $2, result = $3, error_message = $4, completed_at = now()
      FROM devices d
      WHERE c.id = $1
        AND d.id = c.device_id
-       AND ($5::text IS NULL OR d.device_code = $5)`,
+       AND ($5::text IS NULL OR d.device_code = $5)
+     RETURNING c.device_id, c.requested_by, c.type`,
     [body.commandId, body.status, JSON.stringify(body.result ?? {}), body.errorMessage ?? null, req.agent?.deviceCode ?? null]
   );
+
+  const command = updated.rows[0];
+  const dataUrl = typeof body.result?.dataUrl === "string" ? body.result.dataUrl : undefined;
+  const mimeType = typeof body.result?.mimeType === "string" ? body.result.mimeType : "image/jpeg";
+  const fileSize = typeof body.result?.fileSize === "number" ? body.result.fileSize : null;
+
+  if (command && body.status === "completed" && dataUrl && ["screenshot", "camera"].includes(command.type)) {
+    await query(
+      `INSERT INTO snapshots (device_id, command_id, taken_by, type, file_path, mime_type, file_size)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [command.device_id, body.commandId, command.requested_by, command.type, dataUrl, mimeType, fileSize]
+    );
+  }
+
   res.json({ ok: true });
 }));

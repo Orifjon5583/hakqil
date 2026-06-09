@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
 using Robbit.Agent.Models;
 
@@ -23,7 +24,7 @@ public sealed class CommandExecutor
         {
             return command.Type switch
             {
-                "screenshot" => Task.FromResult(Placeholder(command, "Screenshot adapter desktop companion orqali ulanadi.")),
+                "screenshot" => CaptureScreenshotAsync(command, cancellationToken),
                 "camera" => Task.FromResult(Placeholder(command, "Camera adapter desktop companion orqali ulanadi.")),
                 "lock" => WriteDesktopCommandAsync(command, "lock", GetMessage(command) ?? "Kompyuter vaqtincha bloklandi."),
                 "unlock" => WriteDesktopCommandAsync(command, "unlock", null),
@@ -53,6 +54,7 @@ public sealed class CommandExecutor
         string path = Path.Combine(directory, "desktop-command.json");
         var payload = new
         {
+            commandId = command.Id,
             action,
             message,
             emergencyUnlockPasswordHash = Sha256(_settings.Current.EmergencyUnlockPassword),
@@ -61,6 +63,50 @@ public sealed class CommandExecutor
 
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(payload), CancellationToken.None);
         return new CommandResult(command.Id, "completed", new { message = $"Desktop command queued: {action}" });
+    }
+
+    private async Task<CommandResult> CaptureScreenshotAsync(AgentCommand command, CancellationToken cancellationToken)
+    {
+        await WriteDesktopCommandAsync(command, "screenshot", null);
+
+        string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RobbitMonitor");
+        string resultPath = Path.Combine(directory, $"screenshot-result-{command.Id}.json");
+        DateTimeOffset deadline = DateTimeOffset.UtcNow.AddSeconds(12);
+
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (File.Exists(resultPath))
+            {
+                try
+                {
+                    string json = await File.ReadAllTextAsync(resultPath, cancellationToken);
+                    File.Delete(resultPath);
+                    var result = JsonSerializer.Deserialize<DesktopScreenshotResult>(json);
+
+                    if (result?.DataUrl is not null)
+                    {
+                        return new CommandResult(command.Id, "completed", new
+                        {
+                            dataUrl = result.DataUrl,
+                            mimeType = result.MimeType,
+                            fileSize = result.FileSize
+                        });
+                    }
+
+                    return new CommandResult(command.Id, "failed", ErrorMessage: result?.ErrorMessage ?? "Screenshot result is empty");
+                }
+                catch (Exception ex)
+                {
+                    return new CommandResult(command.Id, "failed", ErrorMessage: ex.Message);
+                }
+            }
+
+            await Task.Delay(300, cancellationToken);
+        }
+
+        return new CommandResult(command.Id, "failed", ErrorMessage: "Desktop screenshot timed out. Desktop companion ishlayotganini tekshiring.");
     }
 
     private static string? GetMessage(AgentCommand command)
@@ -76,6 +122,17 @@ public sealed class CommandExecutor
         byte[] bytes = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
+
+    private sealed record DesktopScreenshotResult(
+        [property: JsonPropertyName("dataUrl")]
+        string? DataUrl,
+        [property: JsonPropertyName("mimeType")]
+        string MimeType,
+        [property: JsonPropertyName("fileSize")]
+        long FileSize,
+        [property: JsonPropertyName("errorMessage")]
+        string? ErrorMessage
+    );
 
     private static Task<CommandResult> RestartAsync(AgentCommand command)
     {

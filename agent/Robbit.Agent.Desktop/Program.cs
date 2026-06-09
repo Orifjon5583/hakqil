@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Runtime.InteropServices;
@@ -94,6 +95,9 @@ internal sealed class RobbitDesktopContext : ApplicationContext
             case "message":
                 MessageBox.Show(command.Message ?? "Admin xabari.", "Robbit Monitor", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
+            case "screenshot":
+                CaptureScreenshot(command.CommandId);
+                break;
         }
 
         TryDeleteCommandFile();
@@ -178,6 +182,54 @@ internal sealed class RobbitDesktopContext : ApplicationContext
         }
 
         _lockForms.Clear();
+    }
+
+    private void CaptureScreenshot(Guid? commandId)
+    {
+        if (commandId is null) return;
+
+        string resultPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "RobbitMonitor",
+            $"screenshot-result-{commandId}.json"
+        );
+
+        try
+        {
+            Rectangle bounds = SystemInformation.VirtualScreen;
+            using var bitmap = new Bitmap(bounds.Width, bounds.Height);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.CopyFromScreen(bounds.Left, bounds.Top, 0, 0, bounds.Size);
+            }
+
+            using var stream = new MemoryStream();
+            ImageCodecInfo encoder = ImageCodecInfo.GetImageEncoders().First(codec => codec.MimeType == "image/jpeg");
+            using var parameters = new EncoderParameters(1);
+            parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, 75L);
+            bitmap.Save(stream, encoder, parameters);
+
+            string dataUrl = $"data:image/jpeg;base64,{Convert.ToBase64String(stream.ToArray())}";
+            var result = new
+            {
+                dataUrl,
+                mimeType = "image/jpeg",
+                fileSize = stream.Length,
+                capturedAtUtc = DateTimeOffset.UtcNow
+            };
+            File.WriteAllText(resultPath, JsonSerializer.Serialize(result));
+        }
+        catch (Exception ex)
+        {
+            var result = new
+            {
+                mimeType = "image/jpeg",
+                fileSize = 0,
+                errorMessage = ex.Message,
+                capturedAtUtc = DateTimeOffset.UtcNow
+            };
+            File.WriteAllText(resultPath, JsonSerializer.Serialize(result));
+        }
     }
 
     protected override void Dispose(bool disposing)
@@ -336,6 +388,7 @@ internal sealed class LockForm : Form
 }
 
 internal sealed record DesktopCommand(
+    [property: JsonPropertyName("commandId")] Guid? CommandId,
     [property: JsonPropertyName("action")] string? Action,
     [property: JsonPropertyName("message")] string? Message,
     [property: JsonPropertyName("emergencyUnlockPasswordHash")] string? EmergencyUnlockPasswordHash,
