@@ -12,6 +12,7 @@ import { snapshotsRouter } from "./routes/snapshots.js";
 
 export const app = express();
 
+app.set("trust proxy", env.TRUST_PROXY_HOPS);
 app.use(helmet());
 app.use(cors({ origin: env.CORS_ORIGIN }));
 app.use(express.json({ limit: "2mb" }));

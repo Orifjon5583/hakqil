@@ -7,13 +7,22 @@ import { getAppSettings } from "../services/settings.js";
 export const agentRouter = Router();
 agentRouter.use(requireAgent);
 
+function asyncRoute(handler: any) {
+  return (req: any, res: any, next: any) => {
+    Promise.resolve(handler(req, res, next)).catch(next);
+  };
+}
+
 const heartbeatSchema = z.object({
   deviceId: z.string().min(3).max(160),
   deviceCode: z.string().min(4).max(20),
   brand: z.string().min(1).max(80).optional(),
   computerName: z.string().max(160).optional(),
   username: z.string().max(160).optional(),
-  lastActivityAt: z.string().datetime().optional(),
+  lastActivityAt: z.preprocess(
+    (value) => (value === null || value === "" ? undefined : value),
+    z.string().datetime({ offset: true }).optional()
+  ),
   ipAddress: z.string().ip().optional(),
   osVersion: z.string().max(160).optional(),
   agentVersion: z.string().max(40).optional(),
@@ -28,7 +37,7 @@ function brandFromCode(code: string) {
   return prefix.toUpperCase();
 }
 
-agentRouter.post("/heartbeat", async (req, res) => {
+agentRouter.post("/heartbeat", asyncRoute(async (req: any, res: any) => {
   const body = heartbeatSchema.parse(req.body);
   if (req.agent?.deviceCode && req.agent.deviceCode !== body.deviceCode) {
     return res.status(403).json({ error: "Agent token does not match device code" });
@@ -71,9 +80,9 @@ agentRouter.post("/heartbeat", async (req, res) => {
   );
 
   res.json({ ok: true, devicePk: result.rows[0].id });
-});
+}));
 
-agentRouter.get("/commands", async (req, res) => {
+agentRouter.get("/commands", asyncRoute(async (req: any, res: any) => {
   const deviceId = z.string().min(3).parse(req.query.deviceId);
   const device = await query<{ id: string }>(
     `SELECT id FROM devices
@@ -97,12 +106,12 @@ agentRouter.get("/commands", async (req, res) => {
   );
 
   res.json({ commands: commands.rows });
-});
+}));
 
-agentRouter.get("/settings", async (_req, res) => {
+agentRouter.get("/settings", asyncRoute(async (_req: any, res: any) => {
   const settings = await getAppSettings();
   res.json({ settings });
-});
+}));
 
 const resultSchema = z.object({
   commandId: z.string().uuid(),
@@ -111,7 +120,7 @@ const resultSchema = z.object({
   errorMessage: z.string().max(1000).optional()
 });
 
-agentRouter.post("/result", async (req, res) => {
+agentRouter.post("/result", asyncRoute(async (req: any, res: any) => {
   const body = resultSchema.parse(req.body);
   await query(
     `UPDATE commands c
@@ -123,4 +132,4 @@ agentRouter.post("/result", async (req, res) => {
     [body.commandId, body.status, JSON.stringify(body.result ?? {}), body.errorMessage ?? null, req.agent?.deviceCode ?? null]
   );
   res.json({ ok: true });
-});
+}));
