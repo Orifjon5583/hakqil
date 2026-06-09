@@ -23,14 +23,14 @@ export function Devices() {
 
   return (
     <section>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold">Qurilmalar</h1>
-        <div className="flex rounded border border-line bg-white p-1">
+        <div className="flex max-w-full overflow-x-auto rounded border border-line bg-white p-1">
           {filters.map((filter) => (
             <button
               key={filter}
               onClick={() => setActive(filter)}
-              className={`h-8 rounded px-3 text-sm ${active === filter ? "bg-ink text-white" : "text-slate-600"}`}
+              className={`h-8 shrink-0 rounded px-3 text-sm ${active === filter ? "bg-ink text-white" : "text-slate-600"}`}
             >
               {filter}
             </button>
