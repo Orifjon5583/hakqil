@@ -1,4 +1,5 @@
 import { query } from "../db/pool.js";
+import { env } from "../config/env.js";
 
 export type AppSettings = {
   emergencyUnlockPassword: string;
@@ -9,11 +10,11 @@ export type AppSettings = {
 };
 
 const defaults: AppSettings = {
-  emergencyUnlockPassword: "CHANGE_EMERGENCY_UNLOCK_PASSWORD",
-  dailyShutdownEnabled: true,
-  dailyShutdownTime: "23:00",
-  agentUpdateVersion: "1.0.0",
-  agentUpdateUrl: ""
+  emergencyUnlockPassword: env.DEFAULT_EMERGENCY_UNLOCK_PASSWORD,
+  dailyShutdownEnabled: env.DEFAULT_DAILY_SHUTDOWN_ENABLED,
+  dailyShutdownTime: env.DEFAULT_DAILY_SHUTDOWN_TIME,
+  agentUpdateVersion: env.DEFAULT_AGENT_UPDATE_VERSION,
+  agentUpdateUrl: env.DEFAULT_AGENT_UPDATE_URL
 };
 
 const keys: Record<keyof AppSettings, string> = {

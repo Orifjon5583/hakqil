@@ -23,6 +23,7 @@
 - Open `/health` through the domain.
 - Login with the admin account.
 - Confirm Dashboard loads through HTTPS.
+- Set `DEFAULT_EMERGENCY_UNLOCK_PASSWORD` or update it from Settings.
 - Generate agent token.
 - Install agent on one test computer first.
 - Confirm the device becomes online.

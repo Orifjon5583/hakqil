@@ -90,6 +90,7 @@ Domain shart emas. Lokal/VPS IP bilan ishlatish mumkin:
 - Agent `ApiBaseUrl`: `http://SERVER_IP:4000/api`
 
 Agent heartbeat ichida notebook IP adresini yuboradi. Desktop companion user sessionda faol oynani o'qib, service heartbeat orqali yuborishi uchun `C:\ProgramData\RobbitMonitor\desktop-status.json`ga yozadi.
+Lock holati ham `C:\ProgramData\RobbitMonitor\lock-state.json`da saqlanadi. Shuning uchun admin unlock bermagan yoki emergency parol kiritilmagan bo'lsa, notebook restartdan keyin user session ochilganda lock oynasi qayta chiqadi.
 
 Admin panelda `Devices` jadvalida ko'rinadi:
 
@@ -112,6 +113,7 @@ CHANGE_EMERGENCY_UNLOCK_PASSWORD
 
 Bu parolni faqat admin bilishi kerak. O'quvchilarga tarqatmang.
 Admin paneldagi `Settings` sahifasidan bu parolni keyinroq o'zgartirish mumkin. Agent har heartbeat siklida serverdan yangi sozlamani olib turadi.
+Productionda boshlang'ich parolni backend `.env` ichidagi `DEFAULT_EMERGENCY_UNLOCK_PASSWORD` orqali bering yoki birinchi login qilgandan keyin darhol `Settings` sahifasidan almashtiring.
 
 ## Daily Shutdown And Update
 

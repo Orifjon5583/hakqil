@@ -24,6 +24,7 @@ internal sealed class RobbitDesktopContext : ApplicationContext
 {
     private readonly System.Windows.Forms.Timer _timer;
     private readonly string _commandPath;
+    private readonly string _lockStatePath;
     private readonly string _statusPath;
     private DateTime _lastWriteTimeUtc;
     private readonly List<LockForm> _lockForms = new();
@@ -33,6 +34,7 @@ internal sealed class RobbitDesktopContext : ApplicationContext
         string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "RobbitMonitor");
         Directory.CreateDirectory(directory);
         _commandPath = Path.Combine(directory, "desktop-command.json");
+        _lockStatePath = Path.Combine(directory, "lock-state.json");
         _statusPath = Path.Combine(directory, "desktop-status.json");
 
         _timer = new System.Windows.Forms.Timer { Interval = 1000 };
@@ -42,6 +44,8 @@ internal sealed class RobbitDesktopContext : ApplicationContext
             CheckCommand();
         };
         _timer.Start();
+
+        RestoreLockState();
     }
 
     private void WriteDesktopStatus()
@@ -80,14 +84,70 @@ internal sealed class RobbitDesktopContext : ApplicationContext
         switch (command.Action?.ToLowerInvariant())
         {
             case "lock":
+                SaveLockState(command.Message, command.EmergencyUnlockPasswordHash);
                 ShowLock(command.Message, command.EmergencyUnlockPasswordHash);
                 break;
             case "unlock":
+                ClearLockState();
                 UnlockAll();
                 break;
             case "message":
                 MessageBox.Show(command.Message ?? "Admin xabari.", "Robbit Monitor", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 break;
+        }
+
+        TryDeleteCommandFile();
+    }
+
+    private void RestoreLockState()
+    {
+        if (!File.Exists(_lockStatePath)) return;
+
+        try
+        {
+            string json = File.ReadAllText(_lockStatePath);
+            DesktopLockState? state = JsonSerializer.Deserialize<DesktopLockState>(json);
+            if (state is not null)
+            {
+                ShowLock(state.Message, state.EmergencyUnlockPasswordHash);
+            }
+        }
+        catch
+        {
+        }
+    }
+
+    private void SaveLockState(string? message, string? passwordHash)
+    {
+        try
+        {
+            var state = new DesktopLockState(message, passwordHash, DateTimeOffset.UtcNow);
+            File.WriteAllText(_lockStatePath, JsonSerializer.Serialize(state));
+        }
+        catch
+        {
+        }
+    }
+
+    private void ClearLockState()
+    {
+        try
+        {
+            if (File.Exists(_lockStatePath)) File.Delete(_lockStatePath);
+        }
+        catch
+        {
+        }
+    }
+
+    private void TryDeleteCommandFile()
+    {
+        try
+        {
+            if (File.Exists(_commandPath)) File.Delete(_commandPath);
+        }
+        catch
+        {
         }
     }
 
@@ -97,10 +157,16 @@ internal sealed class RobbitDesktopContext : ApplicationContext
 
         foreach (Screen screen in Screen.AllScreens)
         {
-            var form = new LockForm(screen, message, passwordHash, UnlockAll);
+            var form = new LockForm(screen, message, passwordHash, UnlockWithPassword);
             _lockForms.Add(form);
             form.Show();
         }
+    }
+
+    private void UnlockWithPassword()
+    {
+        ClearLockState();
+        UnlockAll();
     }
 
     private void UnlockAll()
@@ -271,6 +337,12 @@ internal sealed class LockForm : Form
 
 internal sealed record DesktopCommand(
     [property: JsonPropertyName("action")] string? Action,
+    [property: JsonPropertyName("message")] string? Message,
+    [property: JsonPropertyName("emergencyUnlockPasswordHash")] string? EmergencyUnlockPasswordHash,
+    [property: JsonPropertyName("createdAtUtc")] DateTimeOffset CreatedAtUtc
+);
+
+internal sealed record DesktopLockState(
     [property: JsonPropertyName("message")] string? Message,
     [property: JsonPropertyName("emergencyUnlockPasswordHash")] string? EmergencyUnlockPasswordHash,
     [property: JsonPropertyName("createdAtUtc")] DateTimeOffset CreatedAtUtc
