@@ -1,6 +1,6 @@
-import { Activity, Camera, ClipboardList, LayoutDashboard, Maximize2, Monitor, Moon, Settings, Sun } from "lucide-react";
+import { Activity, Camera, ClipboardList, LayoutDashboard, LogOut, Maximize2, Monitor, Moon, Settings, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { getToken } from "../api/client";
 
 const nav = [
@@ -13,6 +13,7 @@ const nav = [
 
 export function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("robbit_theme") === "dark");
 
   useEffect(() => {
@@ -21,6 +22,11 @@ export function Layout() {
   }, [darkMode]);
 
   if (!getToken()) return <Navigate to="/login" replace />;
+
+  function logout() {
+    localStorage.removeItem("robbit_token");
+    navigate("/login", { replace: true });
+  }
 
   async function requestFullscreen() {
     try {
@@ -91,6 +97,14 @@ export function Layout() {
           >
             <Maximize2 size={15} />
           </button>
+          <button
+            onClick={logout}
+            className="flex h-9 w-9 items-center justify-center rounded border border-line bg-white text-slate-700 hover:bg-slate-50"
+            type="button"
+            title="Logout"
+          >
+            <LogOut size={15} />
+          </button>
         </div>
       </header>
 
@@ -130,6 +144,14 @@ export function Layout() {
           >
             <Maximize2 size={15} />
             Fullscreen
+          </button>
+          <button
+            onClick={logout}
+            className="ml-2 flex h-9 items-center gap-2 rounded border border-line bg-white px-3 text-sm text-slate-700 hover:bg-slate-50"
+            type="button"
+          >
+            <LogOut size={15} />
+            Logout
           </button>
         </div>
         <Outlet />
