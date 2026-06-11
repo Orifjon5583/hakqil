@@ -81,9 +81,10 @@ $desktopExe = Join-Path $InstallPath "Robbit.Agent.Desktop.exe"
 if (Test-Path $desktopExe) {
     $runKey = "HKLM:\Software\Microsoft\Windows\CurrentVersion\Run"
     New-ItemProperty -Path $runKey -Name "Robbit Monitor Desktop" -Value "`"$desktopExe`"" -PropertyType String -Force | Out-Null
+    schtasks.exe /Create /TN "Robbit Monitor Desktop" /SC ONLOGON /TR "`"$desktopExe`"" /RL HIGHEST /F | Out-Null
     Get-Process -Name "Robbit.Agent.Desktop" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Process -FilePath $desktopExe
-    Write-Host "Desktop companion autostart sozlandi."
+    Write-Host "Desktop companion autostart sozlandi (Run key + Scheduled Task)."
 } else {
     Write-Warning "Robbit.Agent.Desktop.exe topilmadi. Lock/message oynalari user sessionda chiqmaydi."
 }
