@@ -27,7 +27,6 @@ internal sealed class RobbitDesktopContext : ApplicationContext
     private readonly string _commandPath;
     private readonly string _lockStatePath;
     private readonly string _statusPath;
-    private DateTime _lastWriteTimeUtc;
     private readonly List<LockForm> _lockForms = new();
 
     public RobbitDesktopContext()
@@ -64,10 +63,6 @@ internal sealed class RobbitDesktopContext : ApplicationContext
     private void CheckCommand()
     {
         if (!File.Exists(_commandPath)) return;
-
-        DateTime writeTime = File.GetLastWriteTimeUtc(_commandPath);
-        if (writeTime == _lastWriteTimeUtc) return;
-        _lastWriteTimeUtc = writeTime;
 
         DesktopCommand? command;
         try
