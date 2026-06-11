@@ -16,18 +16,18 @@ function asyncRoute(handler: any) {
 const heartbeatSchema = z.object({
   deviceId: z.string().min(3).max(160),
   deviceCode: z.string().min(4).max(20),
-  brand: z.string().min(1).max(80).optional(),
-  computerName: z.string().max(160).optional(),
-  username: z.string().max(160).optional(),
+  brand: z.string().min(1).max(80).nullish(),
+  computerName: z.string().max(160).nullish(),
+  username: z.string().max(160).nullish(),
   lastActivityAt: z.preprocess(
     (value) => (value === null || value === "" ? undefined : value),
     z.string().datetime({ offset: true }).optional()
   ),
-  ipAddress: z.string().ip().optional(),
-  osVersion: z.string().max(160).optional(),
-  agentVersion: z.string().max(40).optional(),
-  activeWindowTitle: z.string().max(240).optional(),
-  activeProcessName: z.string().max(160).optional()
+  ipAddress: z.string().ip().nullish(),
+  osVersion: z.string().max(160).nullish(),
+  agentVersion: z.string().max(40).nullish(),
+  activeWindowTitle: z.string().max(240).nullish(),
+  activeProcessName: z.string().max(160).nullish()
 });
 
 function brandFromCode(code: string) {
@@ -116,8 +116,8 @@ agentRouter.get("/settings", asyncRoute(async (_req: any, res: any) => {
 const resultSchema = z.object({
   commandId: z.string().uuid(),
   status: z.enum(["completed", "failed"]),
-  result: z.record(z.unknown()).optional(),
-  errorMessage: z.string().max(1000).optional()
+  result: z.record(z.unknown()).nullish(),
+  errorMessage: z.string().max(1000).nullish()
 });
 
 agentRouter.post("/result", asyncRoute(async (req: any, res: any) => {
